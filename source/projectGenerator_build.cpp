@@ -195,6 +195,8 @@ void ProjectGenerator::buildDependencies(StaticList& libs, StaticList& addLibs, 
                 }
             } else if (i == "wincrypt") {
                 addLibs.push_back("Advapi32"); // Add the additional required libs
+            } else if (i == "vulkan") {
+                addLibs.push_back("vulkan-1");
             } else {
                 // By default just use the lib name and prefix with lib if not already
                 if (i.find("lib") == 0) {
@@ -367,6 +369,16 @@ void ProjectGenerator::buildDependencyValues(StaticList& includeDirs, StaticList
                         lib64Dirs.push_back("$(CUDA_PATH)/lib/x64");
                     }
                 }
+            } else if ((i.first == "vulkan") && !winrt) {
+                // Need to check for the existence of environment variables
+                if (!findEnvironmentVariable("VULKAN_SDK")) {
+                    outputWarning("Could not find the VULKAN_SDK environment variable.");
+                    outputWarning(
+                        "Either the Vulkan SDK is not installed or the environment variable is missing.", false);
+                }
+                includeDirs.push_back("$(VULKAN_SDK)/include/");
+                lib32Dirs.push_back("$(VULKAN_SDK)/Lib32");
+                lib64Dirs.push_back("$(VULKAN_SDK)/Lib");
             }
         }
     }
@@ -501,6 +513,7 @@ void ProjectGenerator::buildProjectDependencies(map<string, bool>& projectDeps) 
     projectDeps["sdl2"] =
         (m_projectName == "libavdevice") || (m_projectName == "ffplay") || (m_projectName == "avplay");
     projectDeps["vapoursynth"] = m_projectName.compare("libavformat");
+    projectDeps["vulkan"] = (m_projectName == "libavcodec") || (m_projectName == "libavdevice") || (m_projectName == "libavfilter") || (m_projectName == "libavutil");
     projectDeps["zlib"] = (m_projectName == "libavformat") || (m_projectName == "libavcodec");
 }
 
